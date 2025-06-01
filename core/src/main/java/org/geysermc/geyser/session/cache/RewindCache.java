@@ -138,7 +138,7 @@ public final class RewindCache {
 
         this.onGround = bl3 && this.velocity.getY() < 0;
 
-        boolean cantKeepRewinding = !entity.canStartGliding() || !entity.isGliding(); // Only support gliding for now.
+        boolean cantKeepRewinding = !entity.canStartGliding() || !entity.isGliding() || session.isFlying(); // Only support gliding for now.
         if (cantKeepRewinding) {
             // Forcefully stop rewind
             entity.moveAbsolute(entity.position(), entity.getYaw(), entity.getPitch(), entity.getHeadYaw(), entity.isOnGround(), true);
