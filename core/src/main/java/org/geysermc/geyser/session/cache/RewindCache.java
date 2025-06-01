@@ -137,9 +137,19 @@ public final class RewindCache {
         boolean bl3 = Math.abs(this.velocity.getY() - vector3d.getY()) > 1.0E-5F;
 
         this.onGround = bl3 && this.velocity.getY() < 0;
-        if (!entity.canStartGliding() || !entity.isGliding()) { // Only support gliding for now.
+
+        boolean cantKeepRewinding = !entity.canStartGliding() || !entity.isGliding(); // Only support gliding for now.
+        if (cantKeepRewinding) {
             // Forcefully stop rewind
             entity.moveAbsolute(entity.position(), entity.getYaw(), entity.getPitch(), entity.getHeadYaw(), entity.isOnGround(), true);
+            System.out.println("Forcefully stop rewind!");
+
+            session.setUnconfirmedTeleport(new TeleportCache(
+                entity.getPosition().getX(),
+                entity.position().getY(),
+                entity.getPosition().getZ(), entity.getPitch(), entity.getYaw(),
+                -1
+            ));
         }
 
         this.horizontalCollision = bl || bl2;
@@ -150,6 +160,11 @@ public final class RewindCache {
 
         if (bl3) {
             this.velocity = Vector3f.from(this.velocity.getX(), 0, this.velocity.getZ());
+        }
+
+        if (cantKeepRewinding) {
+            this.queueRewind = false;
+            return;
         }
 
         if (this.queueRewind) {
