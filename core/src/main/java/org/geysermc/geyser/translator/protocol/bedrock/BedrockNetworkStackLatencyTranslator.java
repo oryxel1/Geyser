@@ -30,6 +30,7 @@ import org.cloudburstmc.protocol.bedrock.packet.NetworkStackLatencyPacket;
 import org.cloudburstmc.protocol.bedrock.packet.UpdateAttributesPacket;
 import org.geysermc.geyser.entity.attribute.GeyserAttributeType;
 import org.geysermc.geyser.session.GeyserSession;
+import org.geysermc.geyser.session.cache.RewindCache;
 import org.geysermc.geyser.translator.protocol.PacketTranslator;
 import org.geysermc.geyser.translator.protocol.Translator;
 import org.geysermc.geyser.util.InventoryUtils;
@@ -63,6 +64,12 @@ public class BedrockNetworkStackLatencyTranslator extends PacketTranslator<Netwo
                 session.sendDownstreamPacket(keepAlivePacket);
             }
             return;
+        }
+
+        // As of 1.21.80, this does works.
+        if (packet.getTimestamp() / 1000000L == RewindCache.MAGIC_ELYTRA_BOOST_HACK_TIMESTAMP) {
+            session.getRewindCache().pollElytraBoost();
+            System.out.println("Poll!");
         }
 
         if (session.getPendingOrCurrentBedrockInventoryId() != -1) {

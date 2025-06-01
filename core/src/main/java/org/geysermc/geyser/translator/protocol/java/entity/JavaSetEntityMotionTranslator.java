@@ -62,5 +62,9 @@ public class JavaSetEntityMotionTranslator extends PacketTranslator<ClientboundS
         entityMotionPacket.setMotion(entity.getMotion());
 
         session.sendUpstreamPacket(entityMotionPacket);
+
+        if (entity == session.getPlayerEntity() && session.getRewindCache().isRewinding()) {
+            session.getRewindCache().setCachedVelocity(entityMotionPacket.getMotion());
+        }
     }
 }

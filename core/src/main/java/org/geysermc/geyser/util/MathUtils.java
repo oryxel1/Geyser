@@ -25,6 +25,9 @@
 
 package org.geysermc.geyser.util;
 
+import org.cloudburstmc.math.TrigMath;
+import org.cloudburstmc.math.vector.Vector3f;
+
 public class MathUtils {
     public static final double SQRT_OF_TWO = Math.sqrt(2);
 
@@ -177,5 +180,34 @@ public class MathUtils {
      */
     public static long chunkPositionToLong(int x, int z) {
         return ((x & 0xFFFFFFFFL) << 32L) | (z & 0xFFFFFFFFL);
+    }
+
+    /**
+     * Get player camera orientation from yaw and pitch.
+     *
+     * @param pitch the X rotation
+     * @param yaw the Y rotation
+     * @return the camera orientation (Vector3f)
+     */
+    public static Vector3f getCameraOrientation(float pitch, float yaw) {
+        float f = pitch * 0.017453292F;
+        float g = -yaw * 0.017453292F;
+        float h = TrigMath.cos(g);
+        float i = TrigMath.sin(g);
+        float j = TrigMath.cos(f);
+        float k = TrigMath.sin(f);
+        return Vector3f.from(i * j, -k, h * j);
+    }
+
+    /**
+     * Get x y z length squared.
+     *
+     * @param x the X coordinate
+     * @param y the Y coordinate
+     * @param z the Y coordinate
+     * @return length squared value
+     */
+    public static double lengthSquared(double x, double y, double z) {
+        return x * x + y * y + z * z;
     }
 }

@@ -33,9 +33,11 @@ import org.cloudburstmc.math.vector.Vector2f;
 import org.cloudburstmc.math.vector.Vector3f;
 import org.cloudburstmc.math.vector.Vector3i;
 import org.cloudburstmc.protocol.bedrock.data.AttributeData;
+import org.cloudburstmc.protocol.bedrock.data.MovementEffectType;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityDataTypes;
 import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket;
+import org.cloudburstmc.protocol.bedrock.packet.MovementEffectPacket;
 import org.cloudburstmc.protocol.bedrock.packet.UpdateAttributesPacket;
 import org.geysermc.geyser.entity.EntityDefinitions;
 import org.geysermc.geyser.entity.attribute.GeyserAttributeType;
@@ -152,6 +154,8 @@ public class SessionPlayerEntity extends PlayerEntity {
                 voidPositionDesynched = false; // No need to fix our offset; we've been moved
             }
         }
+
+        this.session.getRewindCache().setRewinding(false);
         super.moveAbsolute(position, yaw, pitch, headYaw, isOnGround, teleported);
     }
 
@@ -528,5 +532,15 @@ public class SessionPlayerEntity extends PlayerEntity {
 
     public boolean isGliding() {
         return getFlag(EntityFlag.GLIDING);
+    }
+
+    public void stopElytraBoost() {
+        MovementEffectPacket packet = new MovementEffectPacket();
+        packet.setTick(this.session.getClientTick());
+        packet.setDuration(0);
+        packet.setEffectType(MovementEffectType.GLIDE_BOOST);
+        packet.setEntityRuntimeId(this.getGeyserId());
+        this.session.sendUpstreamPacketImmediately(packet);
+        this.session.getRewindCache().queueElytraBoost();
     }
 }

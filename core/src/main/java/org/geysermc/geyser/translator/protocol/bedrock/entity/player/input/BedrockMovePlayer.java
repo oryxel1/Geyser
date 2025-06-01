@@ -34,6 +34,7 @@ import org.geysermc.geyser.entity.type.player.SessionPlayerEntity;
 import org.geysermc.geyser.level.physics.CollisionResult;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.text.ChatColor;
+import org.geysermc.geyser.util.MathUtils;
 import org.geysermc.mcprotocollib.network.packet.Packet;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosPacket;
 import org.geysermc.mcprotocollib.protocol.packet.ingame.serverbound.player.ServerboundMovePlayerPosRotPacket;
@@ -55,7 +56,16 @@ final class BedrockMovePlayer {
             return;
         }
 
-        boolean actualPositionChanged = !entity.getPosition().equals(packet.getPosition());
+        session.getRewindCache().tick(packet);
+
+        boolean rewinding = session.getRewindCache().isRewinding();
+
+        Vector3f newPosition = packet.getPosition();
+        if (rewinding) {
+            newPosition = session.getRewindCache().getPosition();
+        }
+
+        boolean actualPositionChanged = MathUtils.lengthSquared(newPosition.getX() - entity.getPosition().getX(), newPosition.getY() - entity.getPosition().getY(), newPosition.getZ() - entity.getPosition().getZ()) > 4e-8;
 
         if (actualPositionChanged) {
             // Send book update before the player moves
@@ -106,6 +116,9 @@ final class BedrockMovePlayer {
         } else {
             isOnGround = packet.getInputData().contains(PlayerAuthInputData.VERTICAL_COLLISION) && entity.getLastTickEndVelocity().getY() < 0;
         }
+        if (rewinding) {
+            isOnGround = session.getRewindCache().isOnGround();
+        }
 
         entity.setLastTickEndVelocity(packet.getDelta());
 
@@ -113,6 +126,9 @@ final class BedrockMovePlayer {
         // (Press into a wall in a corner - you're trying to move but nothing actually happens)
         // This isn't sent when a player is riding a vehicle (as of 1.21.62)
         boolean horizontalCollision = packet.getInputData().contains(PlayerAuthInputData.HORIZONTAL_COLLISION);
+        if (rewinding) {
+            horizontalCollision = session.getRewindCache().isHorizontalCollision();
+        }
 
         // If only the pitch and yaw changed
         // This isn't needed, but it makes the packets closer to vanilla
@@ -128,20 +144,20 @@ final class BedrockMovePlayer {
 
             // Player position MUST be updated on our end, otherwise e.g. chunk loading breaks
             if (hasVehicle) {
-                entity.setPositionManual(packet.getPosition());
+                entity.setPositionManual(newPosition);
                 session.getSkullCache().updateVisibleSkulls();
             }
         } else if (positionChangedAndShouldUpdate) {
-            if (isValidMove(session, entity.getPosition(), packet.getPosition())) {
+            if (isValidMove(session, entity.getPosition(), newPosition)) {
                 if (!session.getWorldBorder().isPassingIntoBorderBoundaries(entity.getPosition(), true)) {
-                    CollisionResult result = session.getCollisionManager().adjustBedrockPosition(packet.getPosition(), isOnGround, packet.getInputData().contains(PlayerAuthInputData.HANDLE_TELEPORT));
+                    CollisionResult result = session.getCollisionManager().adjustBedrockPosition(newPosition, isOnGround, packet.getInputData().contains(PlayerAuthInputData.HANDLE_TELEPORT) || rewinding);
                     if (result != null) { // A null return value cancels the packet
                         Vector3d position = result.correctedMovement();
                         boolean isBelowVoid = entity.isVoidPositionDesynched();
 
                         boolean teleportThroughVoidFloor, mustResyncPosition;
                         // Compare positions here for void floor fix below before the player's position variable is set to the packet position
-                        if (entity.getPosition().getY() >= packet.getPosition().getY() && !isBelowVoid) {
+                        if (entity.getPosition().getY() >= newPosition.getY() && !isBelowVoid) {
                             int floorY = position.getFloorY();
                             int voidFloorLocation = entity.voidFloorPosition();
                             teleportThroughVoidFloor = floorY <= (voidFloorLocation + 1) && floorY >= voidFloorLocation;
@@ -184,7 +200,7 @@ final class BedrockMovePlayer {
                             movePacket = new ServerboundMovePlayerPosPacket(isOnGround, horizontalCollision, position.getX(), yPosition, position.getZ());
                         }
 
-                        entity.setPositionManual(packet.getPosition());
+                        entity.setPositionManual(newPosition);
 
                         // Send final movement changes
                         session.sendDownstreamGamePacket(movePacket);

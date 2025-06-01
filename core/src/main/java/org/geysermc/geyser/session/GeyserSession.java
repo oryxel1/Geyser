@@ -169,6 +169,7 @@ import org.geysermc.geyser.session.cache.LodestoneCache;
 import org.geysermc.geyser.session.cache.PistonCache;
 import org.geysermc.geyser.session.cache.PreferencesCache;
 import org.geysermc.geyser.session.cache.RegistryCache;
+import org.geysermc.geyser.session.cache.RewindCache;
 import org.geysermc.geyser.session.cache.SkullCache;
 import org.geysermc.geyser.session.cache.StructureBlockCache;
 import org.geysermc.geyser.session.cache.TagCache;
@@ -283,6 +284,7 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     private final StructureBlockCache structureBlockCache;
     private final TagCache tagCache;
     private final WorldCache worldCache;
+    private final RewindCache rewindCache;
 
     @Setter
     private TeleportCache unconfirmedTeleport;
@@ -689,6 +691,12 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
     @Setter
     private int stepTicks = 0;
 
+    /**
+     * Current tick sent by the client through PlayerAuthInputPacket.
+     */
+    @Setter
+    private long clientTick;
+
     public GeyserSession(GeyserImpl geyser, BedrockServerSession bedrockServerSession, EventLoop tickEventLoop) {
         this.geyser = geyser;
         this.upstream = new UpstreamSession(bedrockServerSession);
@@ -712,6 +720,8 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
         this.structureBlockCache = new StructureBlockCache();
         this.tagCache = new TagCache(this);
         this.worldCache = new WorldCache(this);
+        this.rewindCache = new RewindCache(this);
+
         this.cameraData = new GeyserCameraData(this);
         this.entityData = new GeyserEntityData(this);
 
@@ -1631,8 +1641,8 @@ public class GeyserSession implements GeyserConnection, GeyserCommandSource {
 
         startGamePacket.setChatRestrictionLevel(ChatRestrictionLevel.NONE);
 
-        startGamePacket.setAuthoritativeMovementMode(AuthoritativeMovementMode.SERVER);
-        startGamePacket.setRewindHistorySize(0);
+        startGamePacket.setAuthoritativeMovementMode(AuthoritativeMovementMode.SERVER_WITH_REWIND);
+        startGamePacket.setRewindHistorySize(20);
         startGamePacket.setServerAuthoritativeBlockBreaking(false);
 
         startGamePacket.setServerId("");
