@@ -152,14 +152,17 @@ public final class RewindCache {
             this.velocity = Vector3f.from(this.velocity.getX(), 0, this.velocity.getZ());
         }
 
-        if (this.velocity.distance(packet.getDelta()) < 0.001) {
-            this.rewinding = false;
-            System.out.println("Stop rewinding!");
-        }
-
         if (this.queueRewind) {
             this.rewind();
             this.queueRewind = false;
+        }
+
+        double differ = this.velocity.distance(packet.getDelta());
+        if (differ < 0.001) {
+            this.rewinding = false;
+            System.out.println("Stop rewinding!");
+        } else if (differ > 0.15) {
+            this.queueRewind = true;
         }
     }
 
