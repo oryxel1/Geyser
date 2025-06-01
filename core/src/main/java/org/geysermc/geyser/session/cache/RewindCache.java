@@ -185,13 +185,11 @@ public final class RewindCache {
         final SessionPlayerEntity entity = session.getPlayerEntity();
 
         CorrectPlayerMovePredictionPacket packet = new CorrectPlayerMovePredictionPacket();
-        packet.setPosition(entity.getPosition());
+        packet.setPosition(this.position);
         packet.setDelta(this.velocity);
         packet.setTick(this.session.getClientTick());
         packet.setOnGround(entity.isOnGround());
         this.session.sendUpstreamPacketImmediately(packet);
-
-        this.position = entity.getPosition();
     }
 
     public void queueElytraBoost() {
