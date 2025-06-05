@@ -25,11 +25,14 @@
 
 package org.geysermc.geyser.item.custom;
 
+import net.kyori.adventure.key.Key;
 import org.cloudburstmc.nbt.NbtMapBuilder;
 import org.geysermc.geyser.api.item.custom.v2.component.DataComponent;
 import org.geysermc.geyser.api.item.custom.v2.component.DataComponentMap;
+import org.geysermc.geyser.api.item.custom.v2.component.GeyserDataComponent;
 import org.geysermc.geyser.api.item.custom.v2.component.Repairable;
 import org.geysermc.geyser.api.util.Identifier;
+import org.geysermc.geyser.registry.populator.CustomItemRegistryPopulator;
 import org.geysermc.geyser.util.MinecraftKey;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.EquipmentSlot;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.Consumable;
@@ -38,10 +41,12 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponen
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.Equippable;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.FoodProperties;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.HolderSet;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.ToolData;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.UseCooldown;
 import org.geysermc.mcprotocollib.protocol.data.game.level.sound.BuiltinSound;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,11 +66,11 @@ import java.util.Map;
  * <p>Most components convert over nicely, and it is very much preferred to have every API component have a converter in here. However, this is not always possible. At the moment, there are 2 exceptions:
  * <ul>
  *     <li>The MCPL counterpart of the {@link DataComponent#REPAIRABLE} component is just an ID holder set, which can't be used in the custom item registry populator.
- *     Also see {@link org.geysermc.geyser.registry.populator.CustomItemRegistryPopulator#computeRepairableProperties(Repairable, NbtMapBuilder)}.</li>
- *     <li>Non-vanilla data components (from {@link org.geysermc.geyser.api.item.custom.v2.component.GeyserDataComponent}) don't have converters registered, for obvious reasons.
+ *     Also see {@link CustomItemRegistryPopulator#computeRepairableProperties(Repairable, NbtMapBuilder)}.</li>
+ *     <li>Non-vanilla data components (from {@link GeyserDataComponent}) don't have converters registered, for obvious reasons.
  *     They're used directly in the custom item registry populator. Eventually, some may have converters introduced as Mojang introduces such components in Java.</li>
  * </ul>
- * For both of these cases proper accommodations have been made in the {@link org.geysermc.geyser.registry.populator.CustomItemRegistryPopulator}.
+ * For both of these cases proper accommodations have been made in the {@link CustomItemRegistryPopulator}.
  */
 public class ComponentConverters {
     private static final Map<DataComponent<?>, ComponentConverter<?>> converters = new HashMap<>();
@@ -111,8 +116,23 @@ public class ComponentConverters {
 
         registerConverter(DataComponent.ENCHANTABLE, (itemMap, value) -> itemMap.put(DataComponentTypes.ENCHANTABLE, value));
 
-        registerConverter(DataComponent.TOOL, (itemMap, value) -> itemMap.put(DataComponentTypes.TOOL,
-            new ToolData(List.of(), 1.0F, 1, value.canDestroyBlocksInCreative())));
+        registerConverter(DataComponent.TOOL, (itemMap, value) -> {
+            List<ToolData.Rule> rules = new ArrayList<>();
+            value.rules().forEach(rule -> {
+                HolderSet set = null;
+                if (rule.blocks().holders() != null) {
+                    set = new HolderSet(rule.blocks().holders());
+                } else if (rule.blocks().location() != null) {
+                    set = new HolderSet(Key.key(rule.blocks().location()));
+                }
+
+                if (set != null) {
+                    rules.add(new ToolData.Rule(set, rule.speed(), rule.correctForDrops()));
+                }
+            });
+
+            itemMap.put(DataComponentTypes.TOOL, new ToolData(rules, value.defaultMiningSpeed(), 1, value.canDestroyBlocksInCreative()));
+        });
 
         registerConverter(DataComponent.ENCHANTMENT_GLINT_OVERRIDE, (itemMap, value) -> itemMap.put(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, value));
     }
