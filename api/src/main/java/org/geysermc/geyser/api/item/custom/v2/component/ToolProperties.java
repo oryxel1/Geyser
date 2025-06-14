@@ -25,5 +25,11 @@
 
 package org.geysermc.geyser.api.item.custom.v2.component;
 
-public record ToolProperties(boolean canDestroyBlocksInCreative) {
+import java.util.List;
+
+public record ToolProperties(List<Rule> rules, float defaultMiningSpeed, int damagePerBlock, boolean canDestroyBlocksInCreative) {
+    public record Rule(SimplifiedHolderSet blocks, Float speed, Boolean correctForDrops) {
+    }
+
+    public record SimplifiedHolderSet(int[] blocks) {}
 }

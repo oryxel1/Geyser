@@ -34,6 +34,8 @@ import org.geysermc.geyser.registry.mappings.components.DataComponentReader;
 import org.geysermc.geyser.registry.mappings.util.MappingsUtil;
 import org.geysermc.geyser.registry.mappings.util.NodeReader;
 
+import java.util.List;
+
 public class ToolPropertiesReader extends DataComponentReader<ToolProperties> {
 
     public ToolPropertiesReader() {
@@ -42,6 +44,6 @@ public class ToolPropertiesReader extends DataComponentReader<ToolProperties> {
 
     @Override
     protected ToolProperties readDataComponent(@NonNull JsonElement element, String... context) throws InvalidCustomMappingsFileException {
-        return new ToolProperties(MappingsUtil.readOrDefault(element, "can_destroy_blocks_in_creative", NodeReader.BOOLEAN, true, context));
+        return new ToolProperties(List.of(), 1, 1, MappingsUtil.readOrDefault(element, "can_destroy_blocks_in_creative", NodeReader.BOOLEAN, true, context));
     }
 }

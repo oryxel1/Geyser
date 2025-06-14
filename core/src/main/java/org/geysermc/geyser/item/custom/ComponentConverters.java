@@ -29,6 +29,7 @@ import org.cloudburstmc.nbt.NbtMapBuilder;
 import org.geysermc.geyser.api.item.custom.v2.component.DataComponent;
 import org.geysermc.geyser.api.item.custom.v2.component.DataComponentMap;
 import org.geysermc.geyser.api.item.custom.v2.component.Repairable;
+import org.geysermc.geyser.api.item.custom.v2.component.ToolProperties;
 import org.geysermc.geyser.api.util.Identifier;
 import org.geysermc.geyser.util.MinecraftKey;
 import org.geysermc.mcprotocollib.protocol.data.game.entity.EquipmentSlot;
@@ -38,10 +39,12 @@ import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponen
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.DataComponents;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.Equippable;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.FoodProperties;
+import org.geysermc.mcprotocollib.protocol.data.game.item.component.HolderSet;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.ToolData;
 import org.geysermc.mcprotocollib.protocol.data.game.item.component.UseCooldown;
 import org.geysermc.mcprotocollib.protocol.data.game.level.sound.BuiltinSound;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,8 +114,14 @@ public class ComponentConverters {
 
         registerConverter(DataComponent.ENCHANTABLE, (itemMap, value) -> itemMap.put(DataComponentTypes.ENCHANTABLE, value));
 
-        registerConverter(DataComponent.TOOL, (itemMap, value) -> itemMap.put(DataComponentTypes.TOOL,
-            new ToolData(List.of(), 1.0F, 1, value.canDestroyBlocksInCreative())));
+        registerConverter(DataComponent.TOOL, (itemMap, value) -> {
+            List<ToolData.Rule> rules = new ArrayList<>();
+            for (ToolProperties.Rule rule : value.rules()) {
+                rules.add(new ToolData.Rule(new HolderSet(rule.blocks().blocks()), rule.speed(), rule.correctForDrops()));
+            }
+
+            itemMap.put(DataComponentTypes.TOOL, new ToolData(rules, value.defaultMiningSpeed(), value.damagePerBlock(), value.canDestroyBlocksInCreative()));
+        });
 
         registerConverter(DataComponent.ENCHANTMENT_GLINT_OVERRIDE, (itemMap, value) -> itemMap.put(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, value));
     }
