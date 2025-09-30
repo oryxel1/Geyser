@@ -45,6 +45,7 @@ import org.geysermc.geyser.level.block.BlockStateValues;
 import org.geysermc.geyser.level.block.Blocks;
 import org.geysermc.geyser.level.block.property.Properties;
 import org.geysermc.geyser.level.block.type.BlockState;
+import org.geysermc.geyser.registry.BlockRegistries;
 import org.geysermc.geyser.session.GeyserSession;
 import org.geysermc.geyser.session.cache.PistonCache;
 import org.geysermc.geyser.translator.collision.BlockCollision;
@@ -410,6 +411,13 @@ public class CollisionManager {
     public boolean isPlayerInWater() {
         BlockState state = session.getGeyser().getWorldManager().blockAt(session, session.getPlayerEntity().getPosition().toInt());
         return state.is(Blocks.WATER) && state.getValue(Properties.LEVEL) == 0;
+    }
+    /**
+     * @return if the player is currently in a liquid block.
+     */
+    public boolean isPlayerInLiquidBlocks() {
+        BlockState state = session.getGeyser().getWorldManager().blockAt(session, session.getPlayerEntity().getPosition().toInt());
+        return state.is(Blocks.WATER) || state.is(Blocks.LAVA) || BlockRegistries.WATERLOGGED.get().get(state.javaId());
     }
 
     /**

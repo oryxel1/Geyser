@@ -56,7 +56,7 @@ public class YAxisSimulator {
 
         // Most anticheat is lenient is enough to exempt these cases, if it's not however then we will flag regardless anyway
         // due to how different bedrock and java handle this.
-        if (entity.isGliding() || entity.getVehicle() != null || session.getCollisionManager().isPlayerTouchingWater()) {
+        if (entity.isGliding() || entity.getVehicle() != null || session.getCollisionManager().isPlayerInLiquidBlocks()) {
             this.velocity = Double.MAX_VALUE; // Mark this so we can rest values.
             return Double.parseDouble(Float.toString(yPosition));
         }
