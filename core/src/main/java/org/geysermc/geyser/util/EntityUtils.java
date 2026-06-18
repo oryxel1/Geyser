@@ -102,6 +102,11 @@ public final class EntityUtils {
             case SKELETON_HORSE -> mountedHeightOffset -= 0.1875f;
             case SNIFFER -> mountedHeightOffset = 1.8f;
             case STRIDER -> mountedHeightOffset = height - 0.19f;
+            case ARMOR_STAND -> {
+                if (((ArmorStandEntity)mount).isMarker()) {
+                    mountedHeightOffset = -0.2f;
+                }
+            }
         }
         return mountedHeightOffset;
     }
