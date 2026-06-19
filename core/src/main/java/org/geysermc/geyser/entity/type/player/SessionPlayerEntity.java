@@ -536,13 +536,6 @@ public class SessionPlayerEntity extends PlayerEntity {
         this.session.setLockInput(InputLocksFlag.JUMP, entity != null && entity.doesJumpDismount());
         this.session.updateInputLocks();
 
-        // You can't see vehicle health if it's not a living entity, but for some reason console players still able to, show we hide it just in case.
-        if (entity instanceof LivingEntity) {
-            session.getCameraData().resetElement(GuiElement.VEHICLE_HEALTH);
-        } else {
-            session.getCameraData().hideElement(GuiElement.VEHICLE_HEALTH);
-        }
-
         super.setVehicle(entity);
     }
   
