@@ -38,6 +38,7 @@ import org.cloudburstmc.protocol.bedrock.data.entity.EntityFlag;
 import org.cloudburstmc.protocol.bedrock.packet.MovePlayerPacket;
 import org.cloudburstmc.protocol.bedrock.packet.SetEntityMotionPacket;
 import org.cloudburstmc.protocol.bedrock.packet.UpdateAttributesPacket;
+import org.geysermc.geyser.api.bedrock.camera.GuiElement;
 import org.geysermc.geyser.entity.EntityDefinitions;
 import org.geysermc.geyser.entity.attribute.GeyserAttributeType;
 import org.geysermc.geyser.entity.spawn.EntitySpawnContext;
@@ -534,6 +535,13 @@ public class SessionPlayerEntity extends PlayerEntity {
         // Bedrock player can dismount by pressing jump while Java cannot, so we need to prevent player from jumping to match vanilla behaviour.
         this.session.setLockInput(InputLocksFlag.JUMP, entity != null && entity.doesJumpDismount());
         this.session.updateInputLocks();
+
+        // You can't see vehicle health if it's not a living entity, but for some reason console players still able to, show we hide it just in case.
+        if (entity instanceof LivingEntity) {
+            session.getCameraData().resetElement(GuiElement.VEHICLE_HEALTH);
+        } else {
+            session.getCameraData().hideElement(GuiElement.VEHICLE_HEALTH);
+        }
 
         super.setVehicle(entity);
     }
