@@ -200,14 +200,6 @@ public class Entity implements GeyserEntity {
         setFlag(EntityFlag.HIDDEN_WHEN_INVISIBLE, true);
         // Let the Java server (or us) supply all sounds for an entity
         setClientSideSilent();
-
-        if (!(this instanceof LivingEntity)) {
-            AttributeData healthData = new AttributeData(GeyserAttributeType.HEALTH.getBedrockIdentifier(), 0f, 1f, 1f, 1);
-            UpdateAttributesPacket attributesPacket = new UpdateAttributesPacket();
-            attributesPacket.setRuntimeEntityId(geyserId);
-            attributesPacket.setAttributes(Collections.singletonList(healthData));
-            session.sendUpstreamPacket(attributesPacket);
-        }
     }
 
     protected void setClientSideSilent() {
@@ -249,6 +241,9 @@ public class Entity implements GeyserEntity {
      * To be overridden in other entity classes, if additional things need to be done to the spawn entity packet.
      */
     public void addAdditionalSpawnData(AddEntityPacket addEntityPacket) {
+        if (!(this instanceof LivingEntity)) {
+            addEntityPacket.getAttributes().add(new AttributeData(GeyserAttributeType.HEALTH.getBedrockIdentifier(), 0f, 1f, 1f, 1));
+        }
     }
 
     /**
